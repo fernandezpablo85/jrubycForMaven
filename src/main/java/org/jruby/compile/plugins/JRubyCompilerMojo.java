@@ -14,6 +14,11 @@ import org.jruby.compile.plugins.util.*;
  */
 public class JRubyCompilerMojo extends AbstractMojo
 {
+  private static final String COMPILE_COMMAND = "jrubyc --java %s -t %s";
+
+  private static final String UNEXPECTED_ERROR = "Unexpected exception: ";
+  private static final String COMMAND_LINE_ERROR = "Error while executing a command line instruction";
+  private static final String ERROR_CODE_MESSAGE = "Command line instruction returned with an error code";
   private static final String COMPILER_NOT_FOUND = "Couldn't find 'jrubyc' command. Please check that you have $JRUBY_HOME/bin included in your $PATH";
   
   /**
@@ -41,7 +46,7 @@ public class JRubyCompilerMojo extends AbstractMojo
     }
     
     // Create and log the command to be executed
-    String command = String.format("jrubyc --java %s -t %s",rubySourcesDirectory, javaSourcesDirectory);
+    String command = String.format(COMPILE_COMMAND, rubySourcesDirectory, javaSourcesDirectory);
     getLog().info("Running command: " + command);
     
     // Execute the command and trap possible exceptions
@@ -51,15 +56,15 @@ public class JRubyCompilerMojo extends AbstractMojo
     }
     catch(NonZeroReturnException nze)
     {
-      getLog().error("Command line instruction returned with an error code.", nze);
+      getLog().error(ERROR_CODE_MESSAGE, nze);
     }
     catch(CommandLineExecutionException cmle)
     {
-      getLog().error("Error while executing a command line instruction", cmle);
+      getLog().error(COMMAND_LINE_ERROR, cmle);
     }
     catch(Exception e)
     {
-      getLog().error("Unexpected exception: ", e);
+      getLog().error(UNEXPECTED_ERROR, e);
     }
   }
 }
