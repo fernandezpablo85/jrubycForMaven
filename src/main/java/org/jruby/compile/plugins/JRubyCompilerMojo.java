@@ -1,9 +1,8 @@
 package org.jruby.compile.plugins;
 
-import java.io.*;
-import java.util.*;
-
 import org.apache.maven.plugin.*;
+import org.jruby.compile.plugins.exceptions.*;
+import org.jruby.compile.plugins.util.*;
 
 /**
  * Compiles ruby source files into .java files just before the compilation
@@ -15,90 +14,52 @@ import org.apache.maven.plugin.*;
  */
 public class JRubyCompilerMojo extends AbstractMojo
 {
+  private static final String COMPILER_NOT_FOUND = "Couldn't find 'jrubyc' command. Please check that you have $JRUBY_HOME/bin included in your $PATH";
+  
   /**
    * Ruby sources directory
    * 
    * @parameter expression = "${basedir}/src/main/ruby"
    * @required
    */
-  protected String rubyBaseDirectory;
+  protected String rubySourcesDirectory;
   
   /**
-   * Ruby target directory
+   * Java sources directory
    * 
    * @parameter expression = "${basedir}/src/main/java"
    * @required
    */
-  protected String javaBaseDirectory;
+  protected String javaSourcesDirectory;
 
   public void execute() throws MojoExecutionException, MojoFailureException
   {
-    List<File> rubySources = getRubySources();
-    getLog().info("Converting " + rubySources.size() + " ruby source files to java in " + javaBaseDirectory);
-    Runtime r = Runtime.getRuntime();
+    if(!CommandLineUtils.isJRubyCompilerPresent())
+    {
+      getLog().error(COMPILER_NOT_FOUND);
+      return;
+    }
+    
+    // Create and log the command to be executed
+    String command = String.format("jrubyc --java %s -t %s",rubySourcesDirectory, javaSourcesDirectory);
+    getLog().info("Running command: " + command);
+    
+    // Execute the command and trap possible exceptions
     try
     {
-      System.out.println("jrubyc --java " + rubyBaseDirectory + " -t " + javaBaseDirectory);
-      Process p = r.exec("jrubyc --java " + rubyBaseDirectory + " -t " + javaBaseDirectory);
-      int result = p.waitFor();
-      if(result !=0)
-      {
-        getLog().error("jrubyc exited with result code != 0");
-      }
-      else
-      {
-        getLog().info("Ruby compilation successful");
-      }
+      CommandLineUtils.runCommand(command);  
+    }
+    catch(NonZeroReturnException nze)
+    {
+      getLog().error("Command line instruction returned with an error code.", nze);
+    }
+    catch(CommandLineExecutionException cmle)
+    {
+      getLog().error("Error while executing a command line instruction", cmle);
     }
     catch(Exception e)
     {
-      getLog().error(e.getMessage());
-    }
-  }
-  
-  private List<File> getRubySources()
-  {
-    File root = new File(rubyBaseDirectory);
-    if(!root.exists())
-    {
-      getLog().warn("Seems that " + rubyBaseDirectory + " does not exist");
-      return Arrays.asList();
-    }
-    List<File> rubySources = new ArrayList<File>();
-    parseDirectory(root, rubySources);
-    return rubySources;
-  }
-  
-  private void parseDirectory(File directory, List<File> all)
-  {
-    for(File file : directory.listFiles())
-    {
-      if(file.isDirectory())
-      {
-        parseDirectory(file, all);
-      }
-      else
-      {
-        if(file.getName().endsWith(".rb"))
-        {
-          all.add(file);
-        }
-      }
-    }
-  }
-  
-  public static class RubyFileFilter implements FileFilter
-  {
-    public boolean accept(File file)
-    {
-      if(file.isDirectory())
-      {
-        return false;
-      }
-      else
-      {
-        return file.getName().endsWith(".rb");
-      }
+      getLog().error("Unexpected exception: ", e);
     }
   }
 }
