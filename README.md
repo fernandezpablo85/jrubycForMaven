@@ -16,20 +16,22 @@ If you are using maven as a build tool, this plugin will help you add ruby to yo
 
 You need to have [JRuby installed](http://jruby.org/getting-started)
 
+Then, download the plugin sources from github and run `mvn clean install` to locally install the plugin.
+
 Then just add this to your pom.xml:
 
-> <plugin>
->  <groupId>org.jruby.compile.plugin</groupId>
->  <artifactId>maven-jruby-plugin</artifactId>
->  <version>1.0</version>
->  <executions>
->    <execution>
->      <goals>
->        <goal>jruby-compile</goal>
->      </goals>
->    </execution>
->  </executions>
-> </plugin>
+`<plugin>`
+`  <groupId>org.jruby.compile.plugin</groupId>`
+`  <artifactId>maven-jruby-plugin</artifactId>`
+`  <version>1.0</version>`
+`  <executions>`
+`   <execution>`
+`     <goals>`
+`        <goal>jruby-compile</goal>`
+`      </goals>`
+`    </execution>`
+`  </executions>`
+` </plugin>`
 
 And that's it :D
 
